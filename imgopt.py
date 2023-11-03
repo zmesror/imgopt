@@ -3,9 +3,10 @@ import os
 import sys
 import tinify
 import shutil
-from typing import Iterator
+from typing import Iterator, Union
 
 from config import load_config
+from filename import rename
 
 
 def main():
@@ -15,6 +16,7 @@ def main():
         "-o", "--output-folder", help="directory to save converted images"
     )
     parser.add_argument("-O", "--overwrite-output", help="overwrite the output folder")
+    parser.add_argument("-r", "--keyword", help="rename output images using keyword")
     args = parser.parse_args()
 
     # Create output directory
@@ -32,7 +34,7 @@ def main():
 
     # Reduce the size of the images in the input folder
     tinify.key = load_api_key()
-    convert_images(args.input_folder, output_folder)
+    convert_images(args.input_folder, output_folder, args.keyword)
 
 
 def validate_folder(folder: str) -> None:
@@ -58,11 +60,14 @@ def get_images(input_folder: str) -> Iterator[str]:
     )
 
 
-def convert_images(input_folder: str, output_folder: str) -> None:
+def convert_images(input_folder: str, output_folder: str, keyword: Union[str, None]) -> None:
     images = list(get_images(input_folder))
     for image in images:
-        name, _ = image.rsplit(".", 1)
         src_path = os.path.join(input_folder, image)
+        if keyword:
+            name = rename(keyword)
+        else:
+            name, _ = image.rsplit(".", 1)
         dst_path = os.path.join(output_folder, name)
         convert(src_path, dst_path)
 
